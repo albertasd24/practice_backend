@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Plantilla {
+  id                    Int              @id @default(autoincrement())
+  posicion_fotografia_x Int
+  posicion_fotografia_y Int
+  ancho_fotografia      Int
+  altura_fotografia     Int
+  ancho_plantilla       Int
+  altura_plantilla      Int
+  codigo_qr             Boolean
+  carnets               Carnet[]
+  datos_plantilla       DatosPlantilla[]
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model Carnet {
+  id                    Int                  @id @default(autoincrement())
+  fecha_hora_Creacion   DateTime             @default(now())
+  codigo                String               @db.VarChar(100)
+  frecuencias_consultas FrecuenciaConsulta[]
+  usuario_id            Int                  @unique
+  plantilla             Plantilla            @relation(fields: [plantilla_id], references: [id])
+  plantilla_id          Int
+  usuario               Usuario              @relation(fields: [usuario_id], references: [id])
+}
+
+model DatosPlantilla {
+  id           Int       @id @default(autoincrement())
+  nombres      String    @db.VarChar(60)
+  descripcion  String    @db.VarChar(60)
+  posicion_x   Int
+  posicion_y   Int
+  plantilla_id Int
+  plantilla    Plantilla @relation(fields: [plantilla_id], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model FrecuenciaConsulta {
+  id        Int      @id @default(autoincrement())
+  carnet    Carnet   @relation(fields: [carnet_id], references: [id])
+  carnet_id Int
+  fecha     DateTime
+}
+
+model FrecuenciaSesion {
+  id         Int      @id @default(autoincrement())
+  usuario    Usuario  @relation(fields: [usuario_id], references: [id])
+  usuario_id Int
+  fecha      DateTime
+}
+
+model Rol {
+  id          Int          @id @default(autoincrement())
+  nombres     String       @db.VarChar(60)
+  descripcion String       @db.VarChar(60)
+  usuarios    Usuario[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  permisos    RolPermiso[]
+}
+
+model Permiso {
+  id          Int          @id @default(autoincrement())
+  nombres     String       @db.VarChar(60)
+  descripcion String       @db.VarChar(60)
+  roles       RolPermiso[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model RolPermiso {
+  id Int @id @default(autoincrement())
+
+  Rol        Rol     @relation(fields: [rol_id], references: [id])
+  rol_id     Int
+  Permiso    Permiso @relation(fields: [permiso_id], references: [id])
+  permiso_id Int
+}
+
+model Usuario {
+  id                   Int                @id @default(autoincrement())
+  nombres              String             @db.VarChar(60)
+  apellidos            String             @db.VarChar(60)
+  cargo                String             @db.VarChar(60)
+  tipo_documento       String             @db.VarChar(20)
+  documento            String             @db.VarChar(20)
+  correo               String             @db.VarChar(50)
+  clave                String             @db.VarChar(255)
+  foto                 String             @db.VarChar(50)
+  frecuencias_sesiones FrecuenciaSesion[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  carnet               Carnet?
+  rol                  Rol                @relation(fields: [rol_id], references: [id])
+  rol_id               Int
+}
