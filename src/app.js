@@ -1,23 +1,20 @@
-import { PrismaClient } from '@prisma/client'
+import express from "express";
 import { dirname } from './helper/dirname.js';
+import './config/index.js';
+import routes from "./routes/index.js";
+import { comprobarConexionBaseDeDatos } from "./config/database.js";
+import { generarToken } from "./middleware/auth.js";
 
-const prisma = new PrismaClient()
-console.log(dirname);
-async function main() {
-    const users = await prisma.user.findMany({
-        include: {
-            profile: true
-        }
+const PORT = process.env.PORT || 3000;
+const app = express();
+
+comprobarConexionBaseDeDatos()
+    .then(() => {
+        app.use(routes);
+        app.listen(PORT, () => { console.log(`Servidor corriendo por el puerto ${PORT}`); })
+        generarToken()
     })
-    await prisma.usuario.find
-    console.log(users)
-}
-// DATABASE_URL="mysql://root:@localhost:3306/proyecto_c"
-// main().then(async () => {
-//     await prisma.$disconnect()
-// })
-//     .catch(async (e) => {
-//         console.log(e);
-//         await prisma.$disconnect()
-//         process.exit(1)
-//     })  
+    .catch(error => {
+        console.error(`Error al conectar a la base de datos: ${error.message}`);
+        process.exit(1); // Detiene la ejecución de la aplicación si la conexión falla
+    });
